@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mabar Manager — Atur Sesi Badminton</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#142521;
+    --ink-soft:#4B615C;
+    --bg:#F1F4EF;
+    --surface:#FFFFFF;
+    --court:#1D6B5B;
+    --court-dark:#123F35;
+    --court-tint:#E4EFEA;
+    --shuttle:#F2B705;
+    --shuttle-tint:#FDF2CC;
+    --coral:#C1442E;
+    --coral-tint:#F7E2DD;
+    --line:#D8E0DA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.num{font-family:'Archivo',sans-serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
+
+  /* header */
+  .app-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;border-bottom:3px solid var(--ink);padding-bottom:16px;}
+  .app-header h1{font-size:26px;font-weight:800;margin:0 0 4px;letter-spacing:-0.01em;}
+  .app-header p{margin:0;color:var(--ink-soft);font-size:14px;}
+  .badge-net{display:inline-flex;align-items:center;gap:6px;background:var(--court);color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border:2px solid var(--ink-dark);}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;margin-bottom:20px;border-bottom:1px solid var(--line);}
+  .tab-btn{
+    font-family:'Inter';font-size:14px;font-weight:600;color:var(--ink-soft);
+    background:transparent;border:none;padding:10px 4px;margin-right:22px;cursor:pointer;
+    border-bottom:3px solid transparent;
+  }
+  .tab-btn.active{color:var(--ink);border-bottom-color:var(--shuttle);}
+  .tab-btn:hover{color:var(--court);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .card{background:var(--surface);border:1px solid var(--line);padding:18px;margin-bottom:16px;}
+  .card h2{font-size:16px;margin:0 0 14px;font-weight:700;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+  input[type=text], select{
+    font-family:'Inter';font-size:14px;padding:9px 10px;border:1.5px solid var(--line);background:#fff;color:var(--ink);
+  }
+  input[type=text]:focus, select:focus{outline:2px solid var(--court);outline-offset:1px;}
+
+  button{font-family:'Inter';font-weight:600;font-size:13.5px;cursor:pointer;border:1.5px solid var(--ink);background:var(--ink);color:#fff;padding:9px 14px;}
+  button:hover{background:var(--court-dark);}
+  button.secondary{background:#fff;color:var(--ink);}
+  button.secondary:hover{background:var(--court-tint);}
+  button.ghost{background:transparent;border-color:var(--line);color:var(--ink-soft);}
+  button.ghost:hover{border-color:var(--coral);color:var(--coral);}
+  button.accent{background:var(--court);border-color:var(--court-dark);}
+  button.accent:hover{background:var(--court-dark);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* player table */
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:8px 8px;border-bottom:2px solid var(--ink);}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .gdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .gdot.L{background:var(--court);}
+  .gdot.P{background:var(--coral);}
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border:1px solid var(--line);color:var(--ink-soft);}
+  .num{font-weight:700;font-size:15px;}
+
+  .empty{color:var(--ink-soft);font-size:13.5px;padding:14px 4px;}
+
+  /* session controls */
+  .courts-count{display:flex;align-items:center;gap:10px;}
+  .stepper{display:flex;border:1.5px solid var(--ink);}
+  .stepper button{border:none;background:#fff;color:var(--ink);width:34px;padding:8px 0;}
+  .stepper button:hover{background:var(--court-tint);}
+  .stepper .val{width:40px;text-align:center;font-weight:700;font-family:'Archivo';padding:8px 0;background:#fff;border-left:1.5px solid var(--ink);border-right:1.5px solid var(--ink);}
+
+  .attend-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin-top:12px;}
+  .attend-item{display:flex;align-items:center;gap:8px;border:1px solid var(--line);padding:8px 10px;font-size:13.5px;}
+  .attend-item.on{border-color:var(--court);background:var(--court-tint);}
+  .attend-item.maxed{border-color:var(--coral);}
+  .attend-item input{width:16px;height:16px;accent-color:var(--court);}
+  .maxed-tag{margin-left:auto;font-size:10px;font-weight:700;color:var(--coral);background:var(--coral-tint);padding:2px 6px;white-space:nowrap;}
+
+  .lvl-pill{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border:1px solid var(--line);color:var(--ink-soft);margin-left:5px;vertical-align:middle;}
+  .lvl-pill.mahir{border-color:var(--shuttle);color:#8A6800;background:var(--shuttle-tint);}
+  .lvl-pill.pemula{border-color:var(--line);color:var(--ink-soft);}
+  .lvl-pill.menengah{border-color:var(--court);color:var(--court-dark);}
+
+  .arrival-list{display:flex;flex-direction:column;gap:0;margin-top:8px;}
+  .arrival-item{display:flex;align-items:center;gap:10px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .arrival-item:last-child{border-bottom:none;}
+  .arrival-idx{font-family:'Archivo';font-weight:800;font-size:13px;color:var(--court);width:22px;}
+  .arrival-time{margin-left:auto;font-size:12px;color:var(--ink-soft);}
+  .arrival-remove{background:transparent;border:1px solid var(--line);color:var(--coral);width:22px;height:22px;padding:0;font-size:13px;line-height:1;}
+  .arrival-remove:hover{background:var(--coral-tint);border-color:var(--coral);}
+
+  /* round / courts grid */
+  .courts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:6px;}
+  .court-card{border:1.5px solid var(--ink);background:#fff;}
+  .court-head{display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;padding:8px 12px;}
+  .court-head .cnum{font-family:'Archivo';font-weight:800;font-size:15px;}
+  .court-subhead{display:flex;gap:6px;padding:7px 12px;border-bottom:1px solid var(--line);background:var(--court-tint);}
+  .court-subhead select{flex:1;font-size:11px;padding:5px 6px;}
+  .court-body{padding:10px 12px;}
+  .slot{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);}
+  .slot:last-child{border-bottom:none;}
+  .slot-idx{font-size:11px;color:var(--ink-soft);width:14px;}
+  .slot select{flex:1;font-size:13px;padding:6px 8px;}
+  .slot-count{font-size:11px;font-weight:700;color:var(--court);background:var(--court-tint);border:1px solid var(--court);padding:2px 6px;white-space:nowrap;}
+  .court-foot{padding:10px 12px;border-top:1px solid var(--line);}
+  .court-foot button{width:100%;}
+  .court-foot button.done-btn{background:var(--shuttle);border-color:#c99500;color:var(--ink);}
+  .court-foot button.done-btn:hover{background:#dba500;}
+
+  .waiting-box{margin-top:14px;border:1px dashed var(--line);padding:12px;}
+  .waiting-box h3{margin:0 0 8px;font-size:13px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-size:12.5px;border:1px solid var(--line);padding:4px 9px;background:var(--shuttle-tint);}
+
+  .round-tag{display:inline-block;background:var(--shuttle);color:var(--ink);font-family:'Archivo';font-weight:800;font-size:13px;padding:4px 10px;margin-bottom:10px;}
+
+  .history-item{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);padding:12px 14px;margin-bottom:8px;}
+  .history-date{font-weight:700;font-size:14px;}
+  .history-meta{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .foot-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+
+  .stat-top{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .stat-box{border:1.5px solid var(--ink);padding:12px 16px;min-width:120px;}
+  .stat-box .num{font-size:26px;display:block;}
+  .stat-box .lbl{font-size:12px;color:var(--ink-soft);}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;font-size:13.5px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(20,37,33,0.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:#fff;border:2px solid var(--ink);max-width:360px;width:100%;padding:20px;}
+  .modal-box p{margin:0 0 18px;font-size:14.5px;line-height:1.5;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;}
+
+  .auth-gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;z-index:200;}
+  .auth-box{background:#fff;border:2px solid var(--ink);padding:28px 26px;max-width:360px;width:100%;}
+  .auth-box h1{margin:0 0 4px;font-size:22px;}
+  .auth-box .sub{color:var(--ink-soft);font-size:13.5px;margin:0 0 18px;line-height:1.5;}
+  .auth-box input[type=password]{width:100%;margin-bottom:10px;}
+  .auth-box button{width:100%;}
+  .auth-err{color:var(--coral);font-size:12.5px;margin:-4px 0 12px;display:none;}
+  .auth-controls{display:none;gap:8px;}
+
+  @media(max-width:520px){
+    .app-header{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+<div class="auth-gate" id="authGate">
+  <div class="auth-box">
+    <h1>🏸 Mabar Manager</h1>
+    <p class="sub" id="authSubtitle">Memuat…</p>
+    <div id="authFormArea"></div>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none;">
+<div class="wrap">
+  <div class="app-header">
+    <div>
+      <h1>Mabar Manager</h1>
+      <p>Atur peserta, lapangan, dan pasangan main badminton — otomatis, tetap bisa diedit.</p>
+    </div>
+    <div class="row" style="gap:10px;">
+      <span class="badge-net">🏸 Data tersimpan &amp; dibagikan ke semua yang buka link ini</span>
+      <div class="auth-controls" id="authControls">
+        <button class="ghost" onclick="showChangePassword()">Ganti kata sandi</button>
+        <button class="ghost" onclick="logout()">🔒 Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="sesi" onclick="switchTab('sesi')">Sesi &amp; Lapangan</button>
+    <button class="tab-btn" data-tab="peserta" onclick="switchTab('peserta')">Peserta</button>
+    <button class="tab-btn" data-tab="stat" onclick="switchTab('stat')">Statistik</button>
+    <button class="tab-btn" data-tab="riwayat" onclick="switchTab('riwayat')">Riwayat Sesi</button>
+  </div>
+
+  <!-- SESI PANEL -->
+  <div class="panel active" id="panel-sesi">
+
+    <div class="card">
+      <h2>Pengaturan hari ini</h2>
+      <div class="row" style="justify-content:space-between;">
+        <div class="row">
+          <label style="font-size:13.5px;color:var(--ink-soft);">Jumlah lapangan dibuka minggu ini</label>
+          <div class="stepper">
+            <button onclick="changeCourts(-1)">–</button>
+            <div class="val" id="courtsVal">2</div>
+            <button onclick="changeCourts(1)">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <button class="secondary" onclick="downloadSessionPDF(buildSessionSnapshot())">📄 Unduh PDF sesi ini</button>
+          <button class="ghost" onclick="startNewSession()">Mulai sesi baru (hari lain)</button>
+        </div>
+      </div>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:10px 0 0;">Tanggal mabar hari ini: <strong id="sessionDateLbl"></strong>. "Sesi baru" menutup hari ini: kehadiran &amp; PDF-nya otomatis tersimpan ke tab Riwayat Sesi, lalu papan dikosongkan untuk hari berikutnya.</p>
+    </div>
+
+    <div class="card">
+      <h2>Kehadiran peserta hari ini</h2>
+      <div class="row">
+        <input type="text" id="quickName" placeholder="Nama peserta baru" style="min-width:180px;">
+        <select id="quickGender">
+          <option value="L">Putra</option>
+          <option value="P">Putri</option>
+        </select>
+        <select id="quickLevel">
+          <option value="pemula">Pemula</option>
+          <option value="menengah" selected>Menengah</option>
+          <option value="mahir">Mahir</option>
+        </select>
+        <button class="secondary" onclick="quickAddPlayer()">+ Tambah &amp; tandai hadir</button>
+      </div>
+      <div class="attend-list" id="attendList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Urutan kedatangan</h2>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 4px;">Tercatat otomatis begitu peserta ditandai hadir — dari yang datang paling awal. Klik ✕ kalau ternyata peserta tidak jadi hadir.</p>
+      <div class="arrival-list" id="arrivalList"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <h2 style="margin:0;">Papan lapangan</h2>
+        <div class="row">
+          <button class="secondary" onclick="generateRound()">🔀 Susun ulang semua lapangan</button>
+          <button class="accent" onclick="finishAllCourts()">✓ Selesaikan semua lapangan</button>
+        </div>
+      </div>
+      <div id="roundArea"></div>
+    </div>
+  </div>
+
+  <!-- PESERTA PANEL -->
+  <div class="panel" id="panel-peserta">
+    <div class="card">
+      <h2>Tambah peserta</h2>
+      <div class="row">
+        <input type="text" id="newName" placeholder="Nama lengkap / panggilan">
+        <select id="newGender">
+          <option value="L">Putra</option>
+          <option value="P">Putri</option>
+        </select>
+        <select id="newLevel">
+          <option value="pemula">Pemula</option>
+          <option value="menengah" selected>Menengah</option>
+          <option value="mahir">Mahir</option>
+        </select>
+        <button onclick="addPlayer()">+ Tambah peserta</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Daftar peserta</h2>
+      <table>
+        <thead><tr><th>Nama</th><th>Gender</th><th>Level</th><th>Total main</th><th>Sesi hadir</th><th></th></tr></thead>
+        <tbody id="playerTableBody"></tbody>
+      </table>
+      <div class="empty" id="playerEmpty" style="display:none;">Belum ada peserta. Tambahkan lewat form di atas.</div>
+    </div>
+  </div>
+  <!-- STATISTIK PANEL -->
+  <div class="panel" id="panel-stat">
+    <div class="stat-top" id="statTop"></div>
+    <div class="card">
+      <h2>Papan peringkat main</h2>
+      <table>
+        <thead><tr><th>#</th><th>Nama</th><th>Gender</th><th>Level</th><th>Total main</th><th>Main hari ini</th><th>Sesi hadir</th></tr></thead>
+        <tbody id="statTableBody"></tbody>
+      </table>
+      <div class="empty" id="statEmpty" style="display:none;">Belum ada data. Tambahkan peserta dan jalankan sesi dulu.</div>
+    </div>
+  </div>
+
+  <!-- RIWAYAT PANEL -->
+  <div class="panel" id="panel-riwayat">
+    <div class="card">
+      <h2>Riwayat sesi mabar</h2>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;">Setiap kali "Mulai sesi baru" diklik, sesi hari itu otomatis tersimpan di sini lengkap dengan tanggalnya — bisa diunduh jadi PDF kapan saja.</p>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="ghost" onclick="closeConfirm()">Batal</button>
+      <button class="accent" onclick="confirmYes()">Ya, lanjutkan</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="pwModal">
+  <div class="modal-box">
+    <p style="font-weight:700;margin-bottom:12px;">Ganti kata sandi admin</p>
+    <input type="password" id="pwCurrent" placeholder="Kata sandi saat ini" style="width:100%;margin-bottom:8px;">
+    <input type="password" id="pwNew" placeholder="Kata sandi baru (min 4 karakter)" style="width:100%;margin-bottom:8px;">
+    <input type="password" id="pwNew2" placeholder="Ulangi kata sandi baru" style="width:100%;margin-bottom:4px;">
+    <p id="pwError" style="color:var(--coral);font-size:12.5px;margin:6px 0 12px;display:none;"></p>
+    <div class="modal-actions">
+      <button class="ghost" onclick="closePwModal()">Batal</button>
+      <button class="accent" onclick="submitChangePassword()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- state ---------- */
+const MAX_SESSION_GAMES = 4; // batas main otomatis per orang per sesi
+let players = [];          // {id, name, gender, level, gamesPlayed, sessionsAttended}
+let session = {
+  date: new Date().toISOString().slice(0,10),
+  courtsCount: 2,
+  attendingIds: [],
+  arrivalOrder: [],        // urutan id sesuai kedatangan
+  arrivalTime: {},         // id -> jam check-in ("09:32")
+  sessionGames: {},        // playerId -> games played today
+  round: null,             // {courts:[{pref, levelPref, playerIds:[...]}], waitingIds:[...]}
+  roundNumber: 0
+};
+let history = [];          // riwayat sesi yang sudah ditutup
+let nextId = 1;
+
+/* ---------- auth (proteksi dasar, bukan keamanan tingkat tinggi) ---------- */
+let isAuthenticated = false;
+let authPasswordSet = false;
+let storedPassHash = null;
+
+async function sha256(text){
+  const enc = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkAuth(){
+  try{
+    const r = await window.storage.get('badminton:loggedin', false);
+    if(r && r.value==='1') isAuthenticated = true;
+  }catch(e){ /* belum pernah login di perangkat/akun ini */ }
+  try{
+    const r = await window.storage.get('badminton:authpass', true);
+    if(r && r.value){ authPasswordSet = true; storedPassHash = r.value; }
+  }catch(e){ authPasswordSet = false; }
+  renderAuthGate();
+}
+
+function renderAuthGate(){
+  const gate = document.getElementById('authGate');
+  const root = document.getElementById('appRoot');
+  const controls = document.getElementById('authControls');
+  if(isAuthenticated){
+    gate.style.display = 'none';
+    root.style.display = '';
+    controls.style.display = 'flex';
+    return;
+  }
+  root.style.display = 'none';
+  gate.style.display = 'flex';
+  controls.style.display = 'none';
+  const subtitle = document.getElementById('authSubtitle');
+  const area = document.getElementById('authFormArea');
+  if(!authPasswordSet){
+    subtitle.textContent = 'Sesi ini baru pertama kali dibuka. Buat kata sandi admin dulu supaya pengaturan mabar tidak sembarangan diubah orang lain.';
+    area.innerHTML = `
+      <input type="password" id="setupPass" placeholder="Buat kata sandi (min 4 karakter)" onkeydown="if(event.key==='Enter')submitSetup()">
+      <input type="password" id="setupPass2" placeholder="Ulangi kata sandi" onkeydown="if(event.key==='Enter')submitSetup()">
+      <p class="auth-err" id="authErr"></p>
+      <button onclick="submitSetup()">Buat &amp; Masuk</button>
+    `;
+  } else {
+    subtitle.textContent = 'Masukkan kata sandi admin untuk mengelola mabar ini.';
+    area.innerHTML = `
+      <input type="password" id="loginPass" placeholder="Kata sandi admin" onkeydown="if(event.key==='Enter')submitLogin()">
+      <p class="auth-err" id="authErr"></p>
+      <button onclick="submitLogin()">Masuk</button>
+    `;
+  }
+}
+
+async function submitSetup(){
+  const p1 = document.getElementById('setupPass').value;
+  const p2 = document.getElementById('setupPass2').value;
+  const err = document.getElementById('authErr');
+  err.style.display = 'none';
+  if(p1.length < 4){ err.textContent = 'Kata sandi minimal 4 karakter'; err.style.display='block'; return; }
+  if(p1 !== p2){ err.textContent = 'Kata sandi tidak cocok'; err.style.display='block'; return; }
+  const hash = await sha256(p1);
+  try{ await window.storage.set('badminton:authpass', hash, true); }
+  catch(e){ err.textContent = 'Gagal menyimpan kata sandi, coba lagi'; err.style.display='block'; return; }
+  storedPassHash = hash; authPasswordSet = true;
+  await setLoggedIn();
+}
+
+async function submitLogin(){
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('authErr');
+  err.style.display = 'none';
+  const hash = await sha256(p);
+  if(hash !== storedPassHash){ err.textContent = 'Kata sandi salah, coba lagi'; err.style.display='block'; return; }
+  await setLoggedIn();
+}
+
+async function setLoggedIn(){
+  isAuthenticated = true;
+  try{ await window.storage.set('badminton:loggedin', '1', false); }catch(e){ /* tetap lanjut walau gagal disimpan */ }
+  renderAuthGate();
+}
+
+async function logout(){
+  isAuthenticated = false;
+  try{ await window.storage.set('badminton:loggedin', '0', false); }catch(e){}
+  renderAuthGate();
+}
+
+function showChangePassword(){
+  document.getElementById('pwCurrent').value = '';
+  document.getElementById('pwNew').value = '';
+  document.getElementById('pwNew2').value = '';
+  document.getElementById('pwError').style.display = 'none';
+  document.getElementById('pwModal').classList.add('show');
+}
+function closePwModal(){
+  document.getElementById('pwModal').classList.remove('show');
+}
+async function submitChangePassword(){
+  const cur = document.getElementById('pwCurrent').value;
+  const n1 = document.getElementById('pwNew').value;
+  const n2 = document.getElementById('pwNew2').value;
+  const errEl = document.getElementById('pwError');
+  errEl.style.display = 'none';
+  const curHash = await sha256(cur);
+  if(curHash !== storedPassHash){ errEl.textContent = 'Kata sandi saat ini salah'; errEl.style.display='block'; return; }
+  if(n1.length < 4){ errEl.textContent = 'Kata sandi baru minimal 4 karakter'; errEl.style.display='block'; return; }
+  if(n1 !== n2){ errEl.textContent = 'Konfirmasi kata sandi baru tidak cocok'; errEl.style.display='block'; return; }
+  const newHash = await sha256(n1);
+  try{ await window.storage.set('badminton:authpass', newHash, true); }
+  catch(e){ errEl.textContent = 'Gagal menyimpan kata sandi baru, coba lagi'; errEl.style.display='block'; return; }
+  storedPassHash = newHash;
+  closePwModal();
+  showToast('Kata sandi admin berhasil diganti');
+}
+
+/* ---------- storage ---------- */
+async function loadState(){
+  try{
+    const r = await window.storage.get('badminton:players', true);
+    players = r && r.value ? JSON.parse(r.value) : [];
+  }catch(e){ players = []; }
+  players.forEach(p=>{ if(!p.level) p.level = 'menengah'; });
+  try{
+    const r = await window.storage.get('badminton:session', true);
+    if(r && r.value) session = JSON.parse(r.value);
+  }catch(e){ /* keep default */ }
+  if(!session.arrivalOrder) session.arrivalOrder = [...session.attendingIds];
+  if(!session.arrivalTime) session.arrivalTime = {};
+  try{
+    const r = await window.storage.get('badminton:history', true);
+    history = r && r.value ? JSON.parse(r.value) : [];
+  }catch(e){ history = []; }
+  nextId = players.reduce((m,p)=>Math.max(m, parseInt(p.id)||0), 0) + 1;
+  renderAll();
+}
+async function savePlayers(){
+  try{ await window.storage.set('badminton:players', JSON.stringify(players), true); }
+  catch(e){ showToast('Gagal menyimpan data peserta'); }
+}
+async function saveSession(){
+  try{ await window.storage.set('badminton:session', JSON.stringify(session), true); }
+  catch(e){ showToast('Gagal menyimpan data sesi'); }
+}
+async function saveHistory(){
+  try{ await window.storage.set('badminton:history', JSON.stringify(history), true); }
+  catch(e){ showToast('Gagal menyimpan riwayat sesi'); }
+}
+
+/* ---------- helpers ---------- */
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function findPlayer(id){ return players.find(p=>String(p.id)===String(id)); }
+function genderLabel(g){ return g==='L' ? 'Putra' : 'Putri'; }
+function levelLabel(l){ return l==='pemula' ? 'Pemula' : l==='mahir' ? 'Mahir' : 'Menengah'; }
+function levelRank(l){ return l==='mahir' ? 3 : l==='pemula' ? 1 : 2; }
+function formatDateID(dateStr){
+  try{
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  }catch(e){ return dateStr; }
+}
+
+/* ---------- konfirmasi kustom (pengganti window.confirm, yang sering
+   diblokir di dalam sandbox artifact sehingga tombol terasa "tidak
+   berfungsi" saat diklik) ---------- */
+let _confirmCallback = null;
+function showConfirm(msg, onYes){
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').classList.add('show');
+  _confirmCallback = onYes;
+}
+function closeConfirm(){
+  document.getElementById('confirmModal').classList.remove('show');
+  _confirmCallback = null;
+}
+function confirmYes(){
+  const cb = _confirmCallback;
+  closeConfirm();
+  if(cb) cb();
+}
+
+/* ---------- tabs ---------- */
+function switchTab(name){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='stat') renderStats();
+  if(name==='riwayat') renderHistory();
+}
+
+/* ---------- players tab ---------- */
+function addPlayer(){
+  const nameInput = document.getElementById('newName');
+  const genderSel = document.getElementById('newGender');
+  const levelSel = document.getElementById('newLevel');
+  const name = nameInput.value.trim();
+  if(!name){ showToast('Isi nama peserta dulu'); return; }
+  players.push({ id: String(nextId++), name, gender: genderSel.value, level: levelSel.value, gamesPlayed:0, sessionsAttended:0 });
+  nameInput.value='';
+  savePlayers();
+  renderAll();
+  showToast(name + ' ditambahkan');
+}
+function quickAddPlayer(){
+  const nameInput = document.getElementById('quickName');
+  const genderSel = document.getElementById('quickGender');
+  const levelSel = document.getElementById('quickLevel');
+  const name = nameInput.value.trim();
+  if(!name){ showToast('Isi nama peserta dulu'); return; }
+  const id = String(nextId++);
+  players.push({ id, name, gender: genderSel.value, level: levelSel.value, gamesPlayed:0, sessionsAttended:0 });
+  session.attendingIds.push(id);
+  session.arrivalOrder.push(id);
+  session.arrivalTime[id] = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+  nameInput.value='';
+  savePlayers(); saveSession();
+  renderAll();
+  showToast(name + ' ditambahkan & ditandai hadir');
+}
+function removePlayer(id){
+  const p = findPlayer(id);
+  if(!p) return;
+  showConfirm('Hapus ' + p.name + ' dari daftar peserta? Riwayat mainnya juga akan hilang.', function(){
+    players = players.filter(x=>String(x.id)!==String(id));
+    session.attendingIds = session.attendingIds.filter(x=>String(x)!==String(id));
+    session.arrivalOrder = session.arrivalOrder.filter(x=>String(x)!==String(id));
+    delete session.arrivalTime[id];
+    delete session.sessionGames[id];
+    if(session.round){
+      session.round.courts.forEach(c=>{ c.playerIds = c.playerIds.map(pid => String(pid)===String(id) ? null : pid); });
+      session.round.waitingIds = session.round.waitingIds.filter(x=>String(x)!==String(id));
+    }
+    savePlayers(); saveSession();
+    renderAll();
+    showToast(p.name + ' dihapus dari daftar peserta');
+  });
+}
+function changeGender(id, newGender){
+  const p = findPlayer(id);
+  if(!p) return;
+  p.gender = newGender;
+  savePlayers();
+  renderAll();
+  showToast('Gender ' + p.name + ' diperbarui');
+}
+function changeLevel(id, newLevel){
+  const p = findPlayer(id);
+  if(!p) return;
+  p.level = newLevel;
+  savePlayers();
+  renderAll();
+  showToast('Level ' + p.name + ' diperbarui');
+}
+
+/* ---------- attendance ---------- */
+function toggleAttend(id){
+  const i = session.attendingIds.findIndex(x=>String(x)===String(id));
+  if(i>=0){
+    session.attendingIds.splice(i,1);
+    session.arrivalOrder = session.arrivalOrder.filter(x=>String(x)!==String(id));
+    delete session.arrivalTime[id];
+  } else {
+    session.attendingIds.push(id);
+    session.arrivalOrder.push(id);
+    session.arrivalTime[id] = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+  }
+  saveSession();
+  renderAttendList();
+  renderArrivalList();
+  renderPlayerTable();
+}
+
+/* ---------- courts count ---------- */
+function changeCourts(delta){
+  session.courtsCount = Math.max(1, Math.min(12, session.courtsCount + delta));
+  saveSession();
+  document.getElementById('courtsVal').textContent = session.courtsCount;
+}
+
+/* ---------- session lifecycle ---------- */
+function startNewSession(){
+  if(session.attendingIds.length===0 && !session.round){
+    // nothing to close, just reset date
+    session.date = new Date().toISOString().slice(0,10);
+    saveSession();
+    renderAll();
+    showToast('Sesi baru dimulai');
+    return;
+  }
+  showConfirm('Tutup sesi hari ini dan mulai sesi baru? Kehadiran & rekap hari ini akan otomatis tersimpan ke Riwayat Sesi.', function(){
+    const snapshot = buildSessionSnapshot();
+    if(snapshot.attendees.length){
+      history.unshift(snapshot);
+      saveHistory();
+    }
+
+    session.attendingIds.forEach(id=>{
+      const p = findPlayer(id);
+      if(p) p.sessionsAttended = (p.sessionsAttended||0) + 1;
+    });
+    session.date = new Date().toISOString().slice(0,10);
+    session.attendingIds = [];
+    session.arrivalOrder = [];
+    session.arrivalTime = {};
+    session.sessionGames = {};
+    session.round = null;
+    session.roundNumber = 0;
+    savePlayers(); saveSession();
+    renderAll();
+    showToast('Sesi baru dimulai, rekap sebelumnya tersimpan di Riwayat Sesi');
+  });
+}
+
+/* ---------- round generation ---------- */
+function byGenderPref(list, pref){
+  const L = list.filter(p=>p.gender==='L');
+  const P = list.filter(p=>p.gender==='P');
+  let chosen = [];
+  if(pref==='putra'){
+    chosen = L.slice(0,4);
+  } else if(pref==='putri'){
+    chosen = P.slice(0,4);
+  } else {
+    chosen = L.slice(0,2).concat(P.slice(0,2));
+  }
+  if(chosen.length < 4){
+    const rest = list.filter(p=>!chosen.includes(p));
+    chosen = chosen.concat(rest.slice(0, 4-chosen.length));
+  }
+  return chosen.slice(0,4);
+}
+
+// levelPref: 'bebas' (abaikan level) | 'sama' (satu lapangan level setara)
+// | 'gendong' (sengaja dicampur level tinggi & rendah dalam satu lapangan)
+function pickForCourt(pool, genderPref, levelPref){
+  let chosen = [];
+  if(levelPref === 'sama'){
+    const groups = { pemula:[], menengah:[], mahir:[] };
+    pool.forEach(p=>{ groups[p.level||'menengah'].push(p); });
+    const order = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+    for(const lvl of order){
+      const c = byGenderPref(groups[lvl], genderPref);
+      if(c.length===4){ chosen = c; break; }
+    }
+  } else if(levelPref === 'gendong'){
+    const spread = [...pool].sort((a,b)=>levelRank(b.level)-levelRank(a.level));
+    chosen = byGenderPref(spread, genderPref);
+  }
+  if(chosen.length < 4){
+    chosen = byGenderPref(pool, genderPref);
+  }
+  return chosen;
+}
+
+function priorityComparator(a,b){
+  // fewer games this session first, then fewer games overall, then shuffle
+  const sa = session.sessionGames[a.id]||0, sb = session.sessionGames[b.id]||0;
+  if(sa!==sb) return sa-sb;
+  if(a.gamesPlayed!==b.gamesPlayed) return a.gamesPlayed-b.gamesPlayed;
+  return Math.random()-0.5;
+}
+
+// Peserta yang sudah main >= MAX_SESSION_GAMES kali otomatis "istirahat" dan
+// tidak diikutkan sistem pemilihan pemain otomatis, KECUALI jumlah peserta
+// yang masih di bawah batas tidak cukup untuk mengisi semua slot lapangan —
+// pada kondisi itu mereka dipakai lagi sebagai cadangan supaya lapangan
+// tidak kosong / ganjil.
+function isMaxedOut(id){
+  return (session.sessionGames[id]||0) >= MAX_SESSION_GAMES;
+}
+function sortedPool(ids){
+  const list = ids.map(findPlayer).filter(Boolean);
+  const under = list.filter(p=>!isMaxedOut(p.id)).sort(priorityComparator);
+  const capped = list.filter(p=>isMaxedOut(p.id)).sort(priorityComparator);
+  return under.concat(capped); // capped hanya dipakai kalau under-nya tidak cukup
+}
+
+function generateRound(){
+  const attendees = session.attendingIds.map(findPlayer).filter(Boolean);
+  if(attendees.length===0){ showToast('Tandai peserta yang hadir dulu'); return; }
+  let pool = sortedPool(session.attendingIds);
+  const prevPrefs = session.round ? session.round.courts.map(c=>c.pref) : [];
+  const prevLevelPrefs = session.round ? session.round.courts.map(c=>c.levelPref||'bebas') : [];
+  const courts = [];
+  for(let i=0;i<session.courtsCount;i++){
+    const pref = prevPrefs[i] || 'mix';
+    const levelPref = prevLevelPrefs[i] || 'bebas';
+    const chosen = pickForCourt(pool, pref, levelPref);
+    pool = pool.filter(p=>!chosen.includes(p));
+    courts.push({ pref, levelPref, playerIds: chosen.map(p=>p.id) });
+  }
+  session.round = { courts, waitingIds: pool.map(p=>p.id) };
+  session.roundNumber = (session.roundNumber||0) + 1;
+  saveSession();
+  renderRound();
+  showToast('Ronde ' + session.roundNumber + ' dibuat');
+}
+
+function setCourtPref(courtIdx, pref){
+  if(!session.round) return;
+  const court = session.round.courts[courtIdx];
+  court.pref = pref;
+  const currentIds = court.playerIds.filter(Boolean);
+  const pool = sortedPool(currentIds.concat(session.round.waitingIds));
+  const chosen = pickForCourt(pool, pref, court.levelPref||'bebas');
+  court.playerIds = chosen.map(p=>p.id);
+  recomputeWaiting();
+  saveSession();
+  renderRound();
+}
+
+function setCourtLevel(courtIdx, levelPref){
+  if(!session.round) return;
+  const court = session.round.courts[courtIdx];
+  court.levelPref = levelPref;
+  const currentIds = court.playerIds.filter(Boolean);
+  const pool = sortedPool(currentIds.concat(session.round.waitingIds));
+  const chosen = pickForCourt(pool, court.pref, levelPref);
+  court.playerIds = chosen.map(p=>p.id);
+  recomputeWaiting();
+  saveSession();
+  renderRound();
+}
+
+function recomputeWaiting(){
+  const placed = new Set();
+  session.round.courts.forEach(c=>c.playerIds.forEach(id=>{ if(id) placed.add(String(id)); }));
+  session.round.waitingIds = session.attendingIds.filter(id=>!placed.has(String(id)));
+}
+
+function swapSlot(courtIdx, slotIdx, newId){
+  if(!session.round) return;
+  const court = session.round.courts[courtIdx];
+  const oldId = court.playerIds[slotIdx];
+  if(newId === '' ) newId = null;
+  if(newId === oldId) return;
+
+  // find where newId currently is, and put oldId there (true swap)
+  if(newId){
+    let swapped = false;
+    session.round.courts.forEach((c, ci)=>{
+      c.playerIds.forEach((pid, si)=>{
+        if(pid && String(pid)===String(newId) && !(ci===courtIdx && si===slotIdx)){
+          c.playerIds[si] = oldId;
+          swapped = true;
+        }
+      });
+    });
+    if(!swapped){
+      // came from waiting list
+      session.round.waitingIds = session.round.waitingIds.filter(id=>String(id)!==String(newId));
+      if(oldId) session.round.waitingIds.push(oldId);
+    }
+  } else if(oldId){
+    session.round.waitingIds.push(oldId);
+  }
+  court.playerIds[slotIdx] = newId;
+  saveSession();
+  renderRound();
+}
+
+/* Selesaikan satu lapangan: catat main untuk 4 pemainnya, lalu otomatis isi
+   lapangan itu dengan giliran berikutnya (prioritas yang paling jarang main),
+   tanpa mengganggu lapangan lain yang masih berjalan. */
+function finishCourtCore(ci){
+  const court = session.round.courts[ci];
+  const finishedIds = court.playerIds.filter(Boolean);
+  if(finishedIds.length===0) return false;
+
+  finishedIds.forEach(id=>{
+    session.sessionGames[id] = (session.sessionGames[id]||0) + 1;
+    const p = findPlayer(id);
+    if(p) p.gamesPlayed = (p.gamesPlayed||0) + 1;
+  });
+
+  // pemain yang sedang main di lapangan LAIN tidak boleh diambil
+  const busyIds = new Set();
+  session.round.courts.forEach((c, idx)=>{
+    if(idx===ci) return;
+    c.playerIds.forEach(id=>{ if(id) busyIds.add(String(id)); });
+  });
+  let pool = sortedPool(session.attendingIds.filter(id=>!busyIds.has(String(id))));
+
+  const chosen = pickForCourt(pool, court.pref, court.levelPref||'bebas');
+  court.playerIds = chosen.map(p=>p.id);
+  recomputeWaiting();
+  return true;
+}
+
+function finishCourt(ci){
+  if(!session.round) return;
+  const ok = finishCourtCore(ci);
+  if(!ok){ showToast('Lapangan ini masih kosong'); return; }
+  savePlayers(); saveSession();
+  renderAll();
+  showToast('Lapangan ' + (ci+1) + ' selesai — pemain baru masuk otomatis');
+}
+
+function finishAllCourts(){
+  if(!session.round){ showToast('Belum ada papan untuk diselesaikan'); return; }
+  let any = false;
+  session.round.courts.forEach((c, ci)=>{ if(finishCourtCore(ci)) any = true; });
+  if(!any){ showToast('Semua lapangan masih kosong'); return; }
+  savePlayers(); saveSession();
+  renderAll();
+  showToast('Semua lapangan diselesaikan — pemain baru masuk otomatis');
+}
+
+/* ---------- render ---------- */
+function renderAll(){
+  document.getElementById('courtsVal').textContent = session.courtsCount;
+  const dateLbl = document.getElementById('sessionDateLbl');
+  if(dateLbl) dateLbl.textContent = formatDateID(session.date);
+  renderAttendList();
+  renderArrivalList();
+  renderPlayerTable();
+  renderRound();
+  renderStats();
+  renderHistory();
+}
+
+function renderAttendList(){
+  const box = document.getElementById('attendList');
+  if(players.length===0){ box.innerHTML = '<div class="empty">Belum ada peserta. Tambahkan lewat form di atas atau tab Peserta.</div>'; return; }
+  box.innerHTML = players.map(p=>{
+    const on = session.attendingIds.some(id=>String(id)===String(p.id));
+    const maxed = isMaxedOut(p.id);
+    return `<label class="attend-item ${on?'on':''} ${maxed?'maxed':''}">
+      <input type="checkbox" ${on?'checked':''} onchange="toggleAttend('${p.id}')">
+      <span class="gdot ${p.gender}"></span>${escapeHtml(p.name)}<span class="lvl-pill ${p.level||'menengah'}">${levelLabel(p.level)}</span>
+      ${maxed?'<span class="maxed-tag">4x selesai</span>':''}
+    </label>`;
+  }).join('');
+}
+
+function renderArrivalList(){
+  const box = document.getElementById('arrivalList');
+  const ids = (session.arrivalOrder||[]).filter(id=>session.attendingIds.some(a=>String(a)===String(id)));
+  if(ids.length===0){ box.innerHTML = '<div class="empty">Belum ada peserta yang check-in hari ini.</div>'; return; }
+  box.innerHTML = ids.map((id,i)=>{
+    const p = findPlayer(id);
+    if(!p) return '';
+    const time = session.arrivalTime[id] || '';
+    return `<div class="arrival-item">
+      <span class="arrival-idx">${i+1}</span>
+      <span class="gdot ${p.gender}"></span>${escapeHtml(p.name)}<span class="lvl-pill ${p.level||'menengah'}">${levelLabel(p.level)}</span>
+      <span class="arrival-time">${time}</span>
+      <button class="arrival-remove" title="Tandai tidak hadir" onclick="toggleAttend('${id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function renderPlayerTable(){
+  const body = document.getElementById('playerTableBody');
+  const empty = document.getElementById('playerEmpty');
+  if(players.length===0){ body.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  body.innerHTML = players.map(p=>`
+    <tr>
+      <td>${escapeHtml(p.name)}</td>
+      <td>
+        <select onchange="changeGender('${p.id}', this.value)" style="padding:5px 7px;font-size:13px;">
+          <option value="L" ${p.gender==='L'?'selected':''}>Putra</option>
+          <option value="P" ${p.gender==='P'?'selected':''}>Putri</option>
+        </select>
+      </td>
+      <td>
+        <select onchange="changeLevel('${p.id}', this.value)" style="padding:5px 7px;font-size:13px;">
+          <option value="pemula" ${p.level==='pemula'?'selected':''}>Pemula</option>
+          <option value="menengah" ${(!p.level||p.level==='menengah')?'selected':''}>Menengah</option>
+          <option value="mahir" ${p.level==='mahir'?'selected':''}>Mahir</option>
+        </select>
+      </td>
+      <td class="num">${p.gamesPlayed||0}</td>
+      <td>${p.sessionsAttended||0}</td>
+      <td><button class="ghost" onclick="removePlayer('${p.id}')">Hapus</button></td>
+    </tr>`).join('');
+}
+
+function playerOptionsHtml(selectedId, includeIds){
+  // includeIds: ids allowed to appear (attendees) — always includes selectedId even if placed elsewhere
+  let opts = '<option value="">— kosong —</option>';
+  includeIds.forEach(id=>{
+    const p = findPlayer(id);
+    if(!p) return;
+    const sel = String(id)===String(selectedId) ? 'selected' : '';
+    const tag = isMaxedOut(id) ? ' — 4x selesai' : '';
+    opts += `<option value="${id}" ${sel}>${escapeHtml(p.name)} (${genderLabel(p.gender)} · ${levelLabel(p.level)})${tag}</option>`;
+  });
+  return opts;
+}
+
+function renderRound(){
+  const area = document.getElementById('roundArea');
+  if(!session.round || session.attendingIds.length===0){
+    area.innerHTML = '<p class="empty">Tandai kehadiran, lalu klik "Susun ulang semua lapangan" untuk membuat papan lapangan.</p>';
+    return;
+  }
+  const allAttendIds = session.attendingIds;
+  let html = `<div class="round-tag">Ronde ${session.roundNumber}</div><div class="courts-grid">`;
+  session.round.courts.forEach((c, ci)=>{
+    const levelPref = c.levelPref || 'bebas';
+    html += `<div class="court-card">
+      <div class="court-head">
+        <span class="cnum">Lapangan ${ci+1}</span>
+      </div>
+      <div class="court-subhead">
+        <select onchange="setCourtPref(${ci}, this.value)">
+          <option value="mix" ${c.pref==='mix'?'selected':''}>Campuran</option>
+          <option value="putra" ${c.pref==='putra'?'selected':''}>Semua Putra</option>
+          <option value="putri" ${c.pref==='putri'?'selected':''}>Semua Putri</option>
+        </select>
+        <select onchange="setCourtLevel(${ci}, this.value)">
+          <option value="bebas" ${levelPref==='bebas'?'selected':''}>Level Bebas</option>
+          <option value="sama" ${levelPref==='sama'?'selected':''}>Level Sama</option>
+          <option value="gendong" ${levelPref==='gendong'?'selected':''}>Gendong (Campur Level)</option>
+        </select>
+      </div>
+      <div class="court-body">`;
+    for(let si=0; si<4; si++){
+      const pid = c.playerIds[si] || '';
+      const cnt = pid ? (session.sessionGames[pid]||0) : null;
+      html += `<div class="slot">
+        <span class="slot-idx">${si+1}</span>
+        <select onchange="swapSlot(${ci}, ${si}, this.value)">
+          ${playerOptionsHtml(pid, allAttendIds)}
+        </select>
+        ${cnt!==null ? `<span class="slot-count">${cnt}x main</span>` : ''}
+      </div>`;
+    }
+    const hasPlayers = c.playerIds.some(Boolean);
+    html += `</div><div class="court-foot">
+        <button class="done-btn" onclick="finishCourt(${ci})" ${hasPlayers?'':'disabled'}>✓ Selesai, ganti peserta</button>
+      </div></div>`;
+  });
+  html += `</div>`;
+
+  const waiting = (session.round.waitingIds||[]).map(findPlayer).filter(Boolean);
+  html += `<div class="waiting-box"><h3>Menunggu giliran (${waiting.length})</h3>`;
+  html += waiting.length ? `<div class="chip-row">${waiting.map(p=>`<span class="chip"><span class="gdot ${p.gender}"></span>${escapeHtml(p.name)}<span class="lvl-pill ${p.level||'menengah'}">${levelLabel(p.level)}</span>${isMaxedOut(p.id)?' · 4x selesai':''}</span>`).join('')}</div>` : `<span class="empty" style="padding:0;">Semua peserta yang hadir sudah dapat lapangan.</span>`;
+  html += `</div>`;
+
+  area.innerHTML = html;
+}
+
+function renderStats(){
+  const top = document.getElementById('statTop');
+  const totalMain = players.reduce((s,p)=>s+(p.gamesPlayed||0),0);
+  const hadirHariIni = session.attendingIds.length;
+  top.innerHTML = `
+    <div class="stat-box"><span class="num">${players.length}</span><span class="lbl">Total peserta</span></div>
+    <div class="stat-box"><span class="num">${hadirHariIni}</span><span class="lbl">Hadir hari ini</span></div>
+    <div class="stat-box"><span class="num">${session.courtsCount}</span><span class="lbl">Lapangan dibuka</span></div>
+    <div class="stat-box"><span class="num">${totalMain}</span><span class="lbl">Total game tercatat</span></div>
+  `;
+  const body = document.getElementById('statTableBody');
+  const empty = document.getElementById('statEmpty');
+  if(players.length===0){ body.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  const sorted = [...players].sort((a,b)=>(b.gamesPlayed||0)-(a.gamesPlayed||0));
+  body.innerHTML = sorted.map((p,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(p.name)}</td>
+      <td><span class="gdot ${p.gender}"></span>${genderLabel(p.gender)}</td>
+      <td><span class="lvl-pill ${p.level||'menengah'}" style="margin-left:0;">${levelLabel(p.level)}</span></td>
+      <td class="num">${p.gamesPlayed||0}</td>
+      <td>${session.sessionGames[p.id]||0}</td>
+      <td>${p.sessionsAttended||0}</td>
+    </tr>`).join('');
+}
+
+/* ---------- PDF & riwayat sesi ---------- */
+function buildSessionSnapshot(){
+  const ids = (session.arrivalOrder||[]).filter(id=>session.attendingIds.some(a=>String(a)===String(id)));
+  return {
+    date: session.date,
+    courtsCount: session.courtsCount,
+    attendees: ids.map(id=>{
+      const p = findPlayer(id);
+      if(!p) return null;
+      return { name: p.name, gender: p.gender, level: p.level||'menengah', gamesToday: session.sessionGames[id]||0, time: session.arrivalTime[id]||'' };
+    }).filter(Boolean)
+  };
+}
+
+function downloadSessionPDF(snapshot){
+  if(!snapshot || snapshot.attendees.length===0){ showToast('Belum ada peserta hadir untuk disimpan ke PDF'); return; }
+  if(!window.jspdf){ showToast('Modul PDF belum siap, coba lagi sesaat lagi'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 18;
+  doc.setFont('helvetica','bold'); doc.setFontSize(16);
+  doc.text('Rekap Mabar Badminton', 14, y); y+=8;
+  doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  doc.text('Tanggal mabar: ' + formatDateID(snapshot.date), 14, y); y+=6;
+  doc.text('Jumlah lapangan dibuka: ' + snapshot.courtsCount, 14, y); y+=6;
+  doc.text('Total peserta hadir: ' + snapshot.attendees.length, 14, y); y+=10;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('Urutan Kedatangan & Jumlah Main', 14, y); y+=7;
+  doc.setFontSize(10);
+  doc.text('#', 14, y); doc.text('Nama', 22, y); doc.text('Gender', 95, y); doc.text('Level', 125, y); doc.text('Jam Datang', 155, y); doc.text('Main', 185, y);
+  y+=4;
+  doc.setDrawColor(180); doc.line(14,y,196,y); y+=5;
+  doc.setFont('helvetica','normal');
+  snapshot.attendees.forEach((a,i)=>{
+    if(y>280){ doc.addPage(); y=18; }
+    doc.text(String(i+1), 14, y);
+    doc.text(a.name, 22, y);
+    doc.text(a.gender==='L'?'Putra':'Putri', 95, y);
+    doc.text(levelLabel(a.level), 125, y);
+    doc.text(a.time||'-', 155, y);
+    doc.text(String(a.gamesToday)+'x', 185, y);
+    y+=6;
+  });
+  doc.save('mabar-' + snapshot.date + '.pdf');
+  showToast('PDF sesi ' + formatDateID(snapshot.date) + ' diunduh');
+}
+
+function renderHistory(){
+  const box = document.getElementById('historyList');
+  if(!box) return;
+  if(!history.length){
+    box.innerHTML = '<div class="empty">Belum ada sesi yang ditutup. Riwayat otomatis tersimpan tiap kali kamu klik "Mulai sesi baru".</div>';
+    return;
+  }
+  box.innerHTML = history.map((h,i)=>`
+    <div class="history-item">
+      <div>
+        <div class="history-date">${formatDateID(h.date)}</div>
+        <div class="history-meta">${h.attendees.length} peserta hadir · ${h.courtsCount} lapangan</div>
+      </div>
+      <button class="secondary" onclick="downloadSessionPDF(history[${i}])">📄 Unduh PDF</button>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+loadState();
+checkAuth();
+</script>
+</body>
+</html>
