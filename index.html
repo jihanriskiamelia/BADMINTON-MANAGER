@@ -357,6 +357,18 @@ let isAuthenticated = false;
 let authPasswordSet = false;
 let storedPassHash = null;
 
+/* ---------- GitHub Pages storage compatibility ----------
+window.storage = {
+  async get(key, shared) {
+    const value = localStorage.getItem(key);
+    return value === null ? null : { value };
+  },
+  async set(key, value, shared) {
+    localStorage.setItem(key, value);
+    return { value };
+  }
+};
+
 async function sha256(text){
   const enc = new TextEncoder().encode(text);
   const buf = await crypto.subtle.digest('SHA-256', enc);
