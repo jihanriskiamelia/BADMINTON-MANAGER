@@ -357,7 +357,7 @@ let isAuthenticated = false;
 let authPasswordSet = false;
 let storedPassHash = null;
 
-/* ---------- GitHub Pages storage compatibility ----------
+/* ---------- GitHub Pages storage compatibility ---------- */
 window.storage = {
   async get(key, shared) {
     const value = localStorage.getItem(key);
